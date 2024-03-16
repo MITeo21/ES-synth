@@ -55,6 +55,8 @@ struct {
   volatile uint8_t RX_Message[8] = {0};
   volatile bool isSender = false;
 
+  volatile char playbackState = 'N'; // Neutral Recording Playback
+
   volatile uint8_t menuState = 0;  // 0 is met, 1 is playback, 2 is oct
   volatile bool isSelected = false;
   volatile uint8_t met = 120;

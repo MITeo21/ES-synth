@@ -352,6 +352,7 @@ void updateDisplayTask(void * pvParameters){
     uint8_t localDotLoc[2] = {0};
     uint8_t localOctave = sysState.octave; 
     char localSendState = sysState.TX_Message[0];
+    char localPlaybackState = sysState.playbackState;
     uint8_t localMetValue = sysState.met;
     bool metOnState = sysState.metOnState;
     uint8_t localMenuState = sysState.menuState;
@@ -393,9 +394,27 @@ void updateDisplayTask(void * pvParameters){
 
     // Playback
     u8g2.drawStr(62, 12, "REC:");
-    u8g2.drawCircle(86, 10, 2);
-    u8g2.drawBox(97, 8, 5, 5);
-    u8g2.drawTriangle(110, 7, 110, 13, 114, 10);
+    switch (localPlaybackState){
+      case 'N':{
+        u8g2.drawCircle(91, 10, 2);
+        u8g2.drawTriangle(110, 7, 110, 13, 114, 10);
+        break;
+        }
+      case 'R':{
+        u8g2.drawBox(91, 8, 5, 5);
+        break;
+        }
+      case 'P':{
+        u8g2.drawBox(114, 8, 2, 5);
+        u8g2.drawBox(110, 8, 2, 5);
+        break;
+        }
+      default:{
+        u8g2.drawCircle(91, 10, 2);
+        u8g2.drawTriangle(110, 7, 110, 13, 114, 10);
+        break;
+        }
+    }
 
     // - - - Knob Stuff - - -
 
