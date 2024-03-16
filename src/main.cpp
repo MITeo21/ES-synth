@@ -91,6 +91,9 @@ void navigate(char direction){
     localDotLoc[i] = sysState.dotLocation[i];
   }
   uint8_t octave = sysState.octave;
+  char localPlaybackState = sysState.playbackState;
+  bool knobPush2 = sysState.knobPushes[2];
+  bool knobPush3 = sysState.knobPushes[3];
   xSemaphoreGive(sysState.mutex);
 
   if(direction=='p') // joystick press changes isSelected state
@@ -123,7 +126,23 @@ void navigate(char direction){
         }
         break;
       case 1:  // playback menu
-        break;  // TODO: implement REC playback menu
+        switch (localPlaybackState){
+          case 'N':{
+            if (knobPush2){ localPlaybackState = 'R';}
+            else if (knobPush3){ localPlaybackState = 'P';}
+            break;
+          }
+          case 'R':{
+            if (knobPush2){ localPlaybackState = 'N';}
+            break;
+          }
+          case 'P':{
+            if (knobPush3){ localPlaybackState = 'N';}
+            break;
+          }
+          default:
+            break; //do nothing
+        }
       case 2:  // octave menu
         if(direction == 'u'){
           if(octave < 8){
@@ -182,6 +201,7 @@ void navigate(char direction){
  
   xSemaphoreTake(sysState.mutex, portMAX_DELAY);
   sysState.octave = octave;
+  sysState.playbackState = localPlaybackState;
   sysState.metOnState = metOnState;
   // sysState.metMenuState = metMenuState; 
   sysState.met = metValue;
@@ -396,7 +416,7 @@ void updateDisplayTask(void * pvParameters){
     u8g2.drawStr(62, 12, "REC:");
     switch (localPlaybackState){
       case 'N':{
-        u8g2.drawCircle(91, 10, 2);
+        u8g2.drawCircle(92, 10, 2);
         u8g2.drawTriangle(110, 7, 110, 13, 114, 10);
         break;
         }
@@ -410,7 +430,7 @@ void updateDisplayTask(void * pvParameters){
         break;
         }
       default:{
-        u8g2.drawCircle(91, 10, 2);
+        u8g2.drawCircle(92, 10, 2);
         u8g2.drawTriangle(110, 7, 110, 13, 114, 10);
         break;
         }
