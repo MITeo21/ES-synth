@@ -150,7 +150,9 @@ void navigate(char direction){
             armKnobs = 0;
           }
           else {
-            armKnobs = 1;
+            if ((knobPush2 == 0)&&(knobPush3 == 0)){
+              armKnobs = 1;
+            }
           }
         }
       case 2:  // octave menu
@@ -665,6 +667,8 @@ void sampleISR() {
       __atomic_store_n(&sysState.keys_down[note_index], 1, __ATOMIC_RELAXED);
     }
     // TODO: ^ should this be a for loop or sth?
+
+    
     
     int8_t Vout = playNotes(localTone, localVolume);
     analogWrite(OUTR_PIN, Vout);
