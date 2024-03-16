@@ -96,6 +96,8 @@ void navigate(char direction){
   bool knobPush3 = sysState.knobPushes[3];
   xSemaphoreGive(sysState.mutex);
 
+  static bool armKnobs = 1;
+
   if(direction=='p') // joystick press changes isSelected state
     isSelected = !isSelected;
 
@@ -126,22 +128,30 @@ void navigate(char direction){
         }
         break;
       case 1:  // playback menu
-        switch (localPlaybackState){
-          case 'N':{
-            if (knobPush2){ localPlaybackState = 'R';}
-            else if (knobPush3){ localPlaybackState = 'P';}
-            break;
+        {
+          if (armKnobs){
+            switch (localPlaybackState){
+              case 'N':{
+                if (knobPush2){ localPlaybackState = 'R';}
+                else if (knobPush3){ localPlaybackState = 'P';}
+                break;
+              }
+              case 'R':{
+                if (knobPush2){ localPlaybackState = 'N';}
+                break;
+              }
+              case 'P':{
+                if (knobPush3){ localPlaybackState = 'N';}
+                break;
+              }
+              default:
+                break; //do nothing
+            }
+            armKnobs = 0;
           }
-          case 'R':{
-            if (knobPush2){ localPlaybackState = 'N';}
-            break;
+          else {
+            armKnobs = 1;
           }
-          case 'P':{
-            if (knobPush3){ localPlaybackState = 'N';}
-            break;
-          }
-          default:
-            break; //do nothing
         }
       case 2:  // octave menu
         if(direction == 'u'){
@@ -466,6 +476,8 @@ void updateDisplayTask(void * pvParameters){
     
     // Toggle LED
     digitalToggle(LED_BUILTIN);  //Toggle LED for CW requirement
+
+    Serial.println(sysState.knobPushes[3]);
   }
 }
 
