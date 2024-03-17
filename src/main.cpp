@@ -478,8 +478,6 @@ void updateDisplayTask(void * pvParameters){
     
     // Toggle LED
     digitalToggle(LED_BUILTIN);  //Toggle LED for CW requirement
-
-    Serial.println(sysState.knobPushes[3]);
   }
 }
 
@@ -652,9 +650,20 @@ int32_t playNotes(const uint32_t &tone, const uint32_t &vol){
 }
 
 void sampleISR() {
+  static uint32_t playbackTimeArray[maxRecordingLength];
+  //static std::vector<uint8_t[8]> playbackNoteVector;
   if (!sysState.isSender){  //Only receivers output sound
     const uint32_t localVolume = __atomic_load_n(&sysState.knobValues[0], __ATOMIC_RELAXED);
     const uint32_t localTone = __atomic_load_n(&sysState.knobValues[1], __ATOMIC_RELAXED);
+    const char localPlaybackState = __atomic_load_n(&sysState.playbackState, __ATOMIC_RELAXED);
+    uint32_t localPlaybackAccumulator = __atomic_load_n(&sysState.playbackAccumulator, __ATOMIC_RELAXED);
+    uint8_t localTX_Message[8];
+    for (int i = 0; i < 8; i++){localTX_Message[i] = __atomic_load_n(&sysState.TX_Message[i], __ATOMIC_RELAXED);}
+
+    static char prevPlaybackState = 'N';
+    static uint8_t prevLocalTX_Message[8];
+    static uint32_t recordingIndex = 0;
+    static uint32_t recordingLength = 0;
 
     uint8_t localRX_Info[3];
     for (int i = 0; i < 3; i++)
@@ -668,8 +677,44 @@ void sampleISR() {
     }
     // TODO: ^ should this be a for loop or sth?
 
-    
-    
+    switch (localPlaybackState){
+      case 'N':
+        {
+          if (prevPlaybackState == 'R'){ 
+            localPlaybackAccumulator = 0; 
+            recordingLength = recordingIndex;
+            recordingIndex = 0;
+          } //reset
+          break;
+        }
+      case 'R': //Recording state
+        {
+          if (prevPlaybackState != 'R'){ //reset
+            localPlaybackAccumulator = 0;
+            recordingIndex = 0;
+          } 
+          bool TX_same = ((localTX_Message[0] == prevLocalTX_Message[0])
+                        &&(localTX_Message[1] == prevLocalTX_Message[1])
+                        &&(localTX_Message[2] == prevLocalTX_Message[2]));
+          if (!TX_same){
+            playbackTimeArray[recordingIndex] = localPlaybackAccumulator;
+            Serial.println(playbackTimeArray[recordingIndex]);
+            recordingIndex++;
+            //playbackNoteVector.push_back(localTX_Message);
+          }
+          __atomic_store_n(&sysState.playbackAccumulator, (localPlaybackAccumulator+1), __ATOMIC_RELAXED);
+          for (int i=0; i<8; i++){ prevLocalTX_Message[i] = localTX_Message[i];}
+          break;
+        }
+      case 'P': //Playback state
+        {
+          break;
+        }
+      default:
+        break; //do nothing
+    }
+    prevPlaybackState = localPlaybackState;
+
     int8_t Vout = playNotes(localTone, localVolume);
     analogWrite(OUTR_PIN, Vout);
   }

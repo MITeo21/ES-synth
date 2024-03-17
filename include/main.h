@@ -15,6 +15,7 @@
 //Constants
 const uint32_t interval = 100; //Display update interval
 const int sampleFreq = 22000; //Sample rate of device
+const int maxRecordingLength = 100; //Number of events per recording
 const int noteMultiplierNumerator = 30403886; //note shift helper
 const int noteMultiplierDenominator = 28697447;
 const char keys[12] = {
@@ -56,6 +57,7 @@ struct {
   volatile bool isSender = false;
 
   volatile char playbackState = 'N'; // Neutral Recording Playback
+  volatile uint32_t playbackAccumulator = 0;
 
   volatile uint8_t menuState = 0;  // 0 is met, 1 is playback, 2 is oct
   volatile bool isSelected = false;
